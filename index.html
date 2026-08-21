@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Movie Journal Tracker</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Lora:ital,wght@0,400;0,600;1,400&family=Plus+Jakarta+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-color: #f7f4ef;
+      --card-bg: #ffffff;
+      --text-main: #2c2a29;
+      --text-muted: #787571;
+      --border-color: #e5dfd5;
+      --accent-star: #d4a359;
+      --star-empty: #e0d8cc;
+      --shadow-sm: 0 4px 20px rgba(0, 0, 0, 0.04);
+      --font-heading: 'Cinzel', serif;
+      --font-body: 'Plus Jakarta Sans', sans-serif;
+      --font-hand: 'Lora', serif;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      font-family: var(--font-body);
+      min-height: 100vh;
+      padding: 40px 20px;
+      background-image: radial-gradient(#e2dad0 0.8px, transparent 0.8px);
+      background-size: 16px 16px;
+    }
+
+    .container {
+      max-width: 1280px;
+      margin: 0 auto;
+    }
+
+    /* HEADER */
+    .header {
+      text-align: center;
+      margin-bottom: 35px;
+      position: relative;
+    }
+
+    .title {
+      font-family: var(--font-heading);
+      font-size: 2.4rem;
+      letter-spacing: 4px;
+      color: var(--text-main);
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+
+    .subtitle {
+      font-family: var(--font-hand);
+      font-style: italic;
+      color: var(--text-muted);
+      font-size: 1rem;
+      margin-bottom: 20px;
+    }
+
+    .toolbar {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 15px;
+      flex-wrap: wrap;
+    }
+
+    .stats-badge {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      padding: 8px 18px;
+      border-radius: 30px;
+      font-size: 0.88rem;
+      box-shadow: var(--shadow-sm);
+      color: var(--text-main);
+    }
+
+    .stats-badge span {
+      font-weight: 600;
+      color: var(--text-main);
+    }
+
+    .btn {
+      background: var(--text-main);
+      color: #fff;
+      border: none;
+      padding: 9px 18px;
+      border-radius: 30px;
+      font-family: var(--font-body);
+      font-size: 0.85rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn:hover {
+      opacity: 0.9;
+      transform: translateY(-1px);
+    }
+
+    .btn-secondary {
+      background: transparent;
+      color: var(--text-main);
+      border: 1px solid var(--border-color);
+    }
+
+    .btn-secondary:hover {
+      background: var(--card-bg);
+    }
+
+    /* GRID */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 22px;
+    }
+
+    @media (max-width: 1024px) { .grid { grid-template-columns: repeat(3, 1fr); } }
+    @media (max-width: 768px) { .grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 480px) { .grid { grid-template-columns: 1fr; } }
+
+    /* CARD */
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 14px;
+      box-shadow: var(--shadow-sm);
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+    }
+
+    .btn-delete {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.9);
+      border: 1px solid var(--border-color);
+      color: #888;
+      font-size: 14px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transition: opacity 0.2s ease;
+      z-index: 10;
+    }
+
+    .card:hover .btn-delete { opacity: 1; }
+    .btn-delete:hover { color: #d9534f; border-color: #d9534f; }
+
+    /* POSTER FRAME */
+    .poster-frame {
+      width: 100%;
+      aspect-ratio: 2 / 3;
+      border: 1px dashed #c8c2b7;
+      border-radius: 6px;
+      background: #fcfbfa;
+      position: relative;
+      overflow: hidden;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 12px;
+    }
+
+    .poster-frame img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      position: absolute;
+      top: 0;
+      left: 0;
+    }
+
+    .poster-placeholder {
+      text-align: center;
+      padding: 10px;
+      color: var(--text-muted);
+      font-size: 0.75rem;
+      pointer-events: none;
+    }
+
+    .poster-placeholder svg {
+      width: 24px;
+      height: 24px;
+      margin-bottom: 4px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 1.5;
+    }
+
+    .file-input { display: none; }
+
+    /* INFO SECTION */
+    .editable-text {
+      outline: none;
+      border-radius: 3px;
+      padding: 1px 3px;
+      transition: background 0.2s;
+    }
+
+    .editable-text:hover, .editable-text:focus {
+      background: #f0eae1;
+    }
+
+    .movie-title {
+      font-family: var(--font-hand);
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-bottom: 2px;
+      color: var(--text-main);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .movie-meta {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+      display: flex;
+      gap: 4px;
+    }
+
+    /* RATING SECTION */
+    .rating-container {
+      background: #fbf9f6;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 8px;
+      margin-bottom: 10px;
+    }
+
+    .stars-wrapper {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 4px;
+    }
+
+    .star-box {
+      position: relative;
+      font-size: 1rem;
+      cursor: pointer;
+      user-select: none;
+      width: 10%;
+      text-align: center;
+    }
+
+    .star-base { color: var(--star-empty); }
+
+    .star-fill {
+      position: absolute;
+      top: 0;
+      left: 0;
+      color: var(--accent-star);
+      overflow: hidden;
+      white-space: nowrap;
+      width: 0%;
+      pointer-events: none;
+    }
+
+    .click-zone {
+      position: absolute;
+      top: 0;
+      height: 100%;
+      width: 50%;
+      z-index: 2;
+    }
+
+    .click-zone.left { left: 0; }
+    .click-zone.right { right: 0; }
+
+    .rating-bottom {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.75rem;
+    }
+
+    .score-text {
+      font-weight: 600;
+      color: var(--text-main);
+    }
+
+    .btn-reset {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 0.7rem;
+      cursor: pointer;
+      text-decoration: underline;
+    }
+
+    /* REVIEW NOTE */
+    .note-container {
+      margin-top: auto;
+    }
+
+    .note-label {
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-muted);
+      margin-bottom: 3px;
+      font-weight: 600;
+    }
+
+    .note-input {
+      width: 100%;
+      border: none;
+      border-bottom: 1px dashed var(--border-color);
+      background: transparent;
+      font-family: var(--font-hand);
+      font-size: 0.82rem;
+      color: #4a4744;
+      resize: none;
+      outline: none;
+      line-height: 1.3;
+      height: 38px;
+    }
+
+    .note-input:focus {
+      border-bottom-color: var(--text-main);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <div class="header">
+      <h1 class="title">My Movie Journal</h1>
+      <p class="subtitle">"Memories, emotions, and personal cinema collection"</p>
+      
+      <div class="toolbar">
+        <div class="stats-badge">Tổng số phim: <span id="total-count">0</span></div>
+        <div class="stats-badge">Điểm trung bình: <span id="avg-score">0.0</span>/10</div>
+        <button class="btn" onclick="addNewMovie()">+ Thêm Phim Mới</button>
+        <button class="btn btn-secondary" onclick="exportData()">Sao lưu Data</button>
+        <button class="btn btn-secondary" onclick="importData()">Tải Backup</button>
+      </div>
+    </div>
+
+    <div class="grid" id="movie-grid"></div>
+  </div>
+
+  <input type="file" id="import-file" accept=".json" style="display:none;" onchange="handleFileImport(event)">
+
+  <script>
+    const STORAGE_KEY = 'my_movie_journal_data_v1';
+
+    const defaultMovies = [
+      { id: '1', title: 'Spirited Away', year: '2001', genre: 'Anime / Fantasy', rating: 9.5, poster: '', note: 'Tuyệt tác hoạt hình tuyệt đẹp về lòng dũng cảm.' },
+      { id: '2', title: 'Interstellar', year: '2014', genre: 'Sci-Fi / Drama', rating: 9.0, poster: '', note: 'Hành trình không gian cảm động về tình cha con.' },
+      { id: '3', title: 'Parasite', year: '2019', genre: 'Thriller / Drama', rating: 8.5, poster: '', note: 'Kịch bản xuất sắc, phản ánh tầng lớp xã hội sâu sắc.' },
+      { id: '4', title: 'Amélie', year: '2001', genre: 'Comedy / Romance', rating: 8.0, poster: '', note: 'Thế giới sắc màu, ngọt ngào và mộng mơ.' },
+      { id: '5', title: 'Your Name', year: '2016', genre: 'Anime / Romance', rating: 9.0, poster: '', note: 'Hình ảnh đồ họa tuyệt đẹp cùng cốt chuyện lôi cuốn.' },
+      { id: '6', title: 'Before Sunrise', year: '2004', genre: 'Romance / Drama', rating: 8.5, poster: '', note: 'Cuộc trò chuyện tinh tế về tình yêu và cuộc sống.' },
+      { id: '7', title: 'La La Land', year: '2016', genre: 'Musical / Romance', rating: 9.0, poster: '', note: 'Âm nhạc sống động cùng cái kết đầy hoài niệm.' },
+      { id: '8', title: 'The Dark Knight', year: '2008', genre: 'Action / Crime', rating: 9.5, poster: '', note: 'Tượng đài phim siêu hình sự và Joker huyền thoại.' }
+    ];
+
+    let movies = [];
+
+    function init() {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        try { movies = JSON.parse(saved); } catch(e) { movies = [...defaultMovies]; }
+      } else {
+        movies = [...defaultMovies];
+      }
+      render();
+    }
+
+    function saveData() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(movies));
+      updateStats();
+    }
+
+    function render() {
+      const grid = document.getElementById('movie-grid');
+      grid.innerHTML = '';
+
+      movies.forEach((m, index) => {
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.innerHTML = `
+          <button class="btn-delete" onclick="deleteMovie('${m.id}')" title="Xóa phim">✕</button>
+
+          <div class="poster-frame" onclick="triggerFileInput('${m.id}')" ondragover="handleDragOver(event)" ondrop="handleDrop(event, '${m.id}')">
+            ${m.poster 
+              ? `<img src="${m.poster}" alt="${m.title}">` 
+              : `<div class="poster-placeholder">
+                  <svg viewBox="0 0 24 24"><path d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                  <div>Kéo & thả ảnh<br>hoặc bấm chọn</div>
+                </div>`}
+            <input type="file" id="file-${m.id}" class="file-input" accept="image/*" onchange="handleFileSelect(event, '${m.id}')">
+          </div>
+
+          <div class="movie-title editable-text" contenteditable="true" onblur="updateField('${m.id}', 'title', this.innerText)">${m.title}</div>
+          
+          <div class="movie-meta">
+            <span class="editable-text" contenteditable="true" onblur="updateField('${m.id}', 'year', this.innerText)">${m.year}</span>
+            <span>•</span>
+            <span class="editable-text" contenteditable="true" onblur="updateField('${m.id}', 'genre', this.innerText)">${m.genre}</span>
+          </div>
+
+          <div class="rating-container">
+            <div class="stars-wrapper">
+              ${renderStars(m.id, m.rating)}
+            </div>
+            <div class="rating-bottom">
+              <span class="score-text">${m.rating.toFixed(1)}/10</span>
+              <button class="btn-reset" onclick="resetRating('${m.id}')">Reset</button>
+            </div>
+          </div>
+
+          <div class="note-container">
+            <div class="note-label">Review Note</div>
+            <textarea class="note-input" placeholder="Ghi chú cảm nghĩ..." onblur="updateField('${m.id}', 'note', this.value)">${m.note || ''}</textarea>
+          </div>
+        `;
+        grid.appendChild(card);
+      });
+
+      updateStats();
+    }
+
+    function renderStars(id, rating) {
+      let html = '';
+      for (let i = 1; i <= 10; i++) {
+        let fillWidth = 0;
+        if (rating >= i) fillWidth = 100;
+        else if (rating >= i - 0.5) fillWidth = 50;
+
+        html += `
+          <div class="star-box">
+            <div class="click-zone left" onclick="setRating('${id}', ${i - 0.5})"></div>
+            <div class="click-zone right" onclick="setRating('${id}', ${i})"></div>
+            <span class="star-base">★</span>
+            <span class="star-fill" style="width: ${fillWidth}%;">★</span>
+          </div>
+        `;
+      }
+      return html;
+    }
+
+    function setRating(id, score) {
+      const m = movies.find(x => x.id === id);
+      if (m) {
+        m.rating = score;
+        saveData();
+        render();
+      }
+    }
+
+    function resetRating(id) {
+      setRating(id, 0);
+    }
+
+    function updateField(id, field, val) {
+      const m = movies.find(x => x.id === id);
+      if (m) {
+        m[field] = val.trim();
+        saveData();
+      }
+    }
+
+    function addNewMovie() {
+      const newMovie = {
+        id: Date.now().toString(),
+        title: 'Tên Phim Mới',
+        year: '2026',
+        genre: 'Thể loại',
+        rating: 0,
+        poster: '',
+        note: ''
+      };
+      movies.push(newMovie);
+      saveData();
+      render();
+    }
+
+    function deleteMovie(id) {
+      movies = movies.filter(x => x.id !== id);
+      saveData();
+      render();
+    }
+
+    function updateStats() {
+      document.getElementById('total-count').innerText = movies.length;
+      if (movies.length === 0) {
+        document.getElementById('avg-score').innerText = '0.0';
+        return;
+      }
+      const sum = movies.reduce((acc, curr) => acc + (curr.rating || 0), 0);
+      document.getElementById('avg-score').innerText = (sum / movies.length).toFixed(1);
+    }
+
+    /* IMAGE UPLOAD & DRAG DROP */
+    function triggerFileInput(id) {
+      document.getElementById(`file-${id}`).click();
+    }
+
+    function handleFileSelect(e, id) {
+      const file = e.target.files[0];
+      if (file) processImageFile(file, id);
+    }
+
+    function handleDragOver(e) { e.preventDefault(); }
+
+    function handleDrop(e, id) {
+      e.preventDefault();
+      const file = e.dataTransfer.files[0];
+      if (file && file.type.startsWith('image/')) {
+        processImageFile(file, id);
+      }
+    }
+
+    function processImageFile(file, id) {
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const m = movies.find(x => x.id === id);
+        if (m) {
+          m.poster = e.target.result;
+          saveData();
+          render();
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+
+    /* BACKUP / RESTORE DATA */
+    function exportData() {
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(movies, null, 2));
+      const downloadAnchor = document.createElement('a');
+      downloadAnchor.setAttribute("href", dataStr);
+      downloadAnchor.setAttribute("download", `movie_journal_backup_${new Date().toISOString().slice(0,10)}.json`);
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+    }
+
+    function importData() {
+      document.getElementById('import-file').click();
+    }
+
+    function handleFileImport(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(evt) {
+        try {
+          const importedMovies = JSON.parse(evt.target.result);
+          if (Array.isArray(importedMovies)) {
+            movies = importedMovies;
+            saveData();
+            render();
+            alert('Đã khôi phục dữ liệu thành công!');
+          }
+        } catch(err) {
+          alert('File JSON không hợp lệ!');
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    init();
+  </script>
+</body>
+</html>
