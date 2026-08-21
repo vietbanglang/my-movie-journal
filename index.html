@@ -203,9 +203,9 @@
       opacity: 0.9;
     }
   </style>
+  <link rel="manifest" href="manifest.json">
 </head>
 <body>
-
   <div class="container">
     <div class="header">
       <h1 class="title">My Movie Journal</h1>
@@ -224,7 +224,7 @@
   </div>
 
   <script>
-    const ADMIN_PASSWORD = "123456"; 
+    const ADMIN_PASSWORD = "8438"; 
     let isAdmin = false;
 
     const firebaseConfig = {
@@ -393,7 +393,7 @@
       const newMovie = {
         id: Date.now().toString(),
         title: 'Tên Phim Mới',
-        year: '2026',
+        year: '202',
         genre: 'Thể loại',
         rating: 0,
         poster: '',
