@@ -242,10 +242,17 @@
     const db = firebase.database().ref('movies');
 
     let movies = [];
+    let sortableInstance = null;
 
     db.on('value', (snapshot) => {
       const data = snapshot.val();
-      movies = data ? Object.values(data) : [];
+      if (Array.isArray(data)) {
+        movies = data.filter(Boolean);
+      } else if (data && typeof data === 'object') {
+        movies = Object.values(data);
+      } else {
+        movies = [];
+      }
       render();
     });
 
@@ -267,9 +274,7 @@
 
     function saveToCloud() {
       if (!isAdmin) return;
-      const moviesObj = {};
-      movies.forEach(m => { moviesObj[m.id] = m; });
-      db.set(moviesObj);
+      db.set(movies);
     }
 
     function render() {
@@ -283,6 +288,7 @@
       grid.innerHTML = '';
 
       movies.forEach((m) => {
+        if (!m) return;
         const card = document.createElement('div');
         card.className = `card ${isAdmin ? 'is-admin' : ''}`;
         card.setAttribute('data-id', m.id);
@@ -301,12 +307,12 @@
             <input type="file" id="file-${m.id}" class="file-input" accept="image/*" onchange="handleFileSelect(event, '${m.id}')">
           </div>
 
-          <div class="movie-title editable-text ${isAdmin ? 'can-edit' : ''}" contenteditable="${isAdmin}" onblur="updateField('${m.id}', 'title', this.innerText)">${m.title}</div>
+          <div class="movie-title editable-text ${isAdmin ? 'can-edit' : ''}" contenteditable="${isAdmin}" onblur="updateField('${m.id}', 'title', this.innerText)">${m.title || ''}</div>
           
           <div class="movie-meta">
-            <span class="editable-text ${isAdmin ? 'can-edit' : ''}" contenteditable="${isAdmin}" onblur="updateField('${m.id}', 'year', this.innerText)">${m.year}</span>
+            <span class="editable-text ${isAdmin ? 'can-edit' : ''}" contenteditable="${isAdmin}" onblur="updateField('${m.id}', 'year', this.innerText)">${m.year || ''}</span>
             <span>•</span>
-            <span class="editable-text ${isAdmin ? 'can-edit' : ''}" contenteditable="${isAdmin}" onblur="updateField('${m.id}', 'genre', this.innerText)">${m.genre}</span>
+            <span class="editable-text ${isAdmin ? 'can-edit' : ''}" contenteditable="${isAdmin}" onblur="updateField('${m.id}', 'genre', this.innerText)">${m.genre || ''}</span>
           </div>
 
           <div class="rating-container">
@@ -336,8 +342,13 @@
         grid.appendChild(card);
       });
 
+      if (sortableInstance) {
+        sortableInstance.destroy();
+        sortableInstance = null;
+      }
+
       if (isAdmin) {
-        new Sortable(grid, {
+        sortableInstance = new Sortable(grid, {
           animation: 150,
           onEnd: function () {
             const newMoviesOrder = [];
@@ -393,7 +404,7 @@
       const newMovie = {
         id: Date.now().toString(),
         title: 'Tên Phim Mới',
-        year: '202',
+        year: '2025',
         genre: 'Thể loại',
         rating: 0,
         poster: '',
@@ -457,44 +468,6 @@
         if (m) { m.poster = finalUrl; saveToCloud(); }
       }
     }
-   // ==========================================
-// CODE LƯU THỨ TỰ KÉO THẢ VÀO FIREBASE
-// ==========================================
-document.addEventListener('DOMContentLoaded', () => {
-  const grid = document.querySelector('.grid') || document.querySelector('.movie-grid') || document.getElementById('movieGrid');
-  
-  if (grid && typeof Sortable !== 'undefined') {
-    new Sortable(grid, {
-      animation: 150,
-      onEnd: function () {
-        if (typeof movies === 'undefined' || !Array.isArray(movies)) return;
-
-        // 1. Lấy danh sách phim theo thứ tự mới hiển thị trên màn hình
-        const newMoviesOrder = [];
-        const cards = grid.children;
-
-        Array.from(cards).forEach(card => {
-          const title = card.querySelector('h3')?.innerText || card.querySelector('h2')?.innerText;
-          const foundMovie = movies.find(m => m.title === title || m.tenPhim === title);
-          if (foundMovie) newMoviesOrder.push(foundMovie);
-        });
-
-        // 2. Cập nhật mảng movies hiện tại
-        if (newMoviesOrder.length === movies.length) {
-          movies.length = 0;
-          movies.push(...newMoviesOrder);
-
-          // 3. Gọi hàm đồng bộ lên Cloud của bạn
-          if (typeof saveToCloud === 'function') {
-            saveToCloud();
-          } else if (typeof saveMovies === 'function') {
-            saveMovies();
-          }
-        }
-      }
-    });
-  }
-});
   </script>
 </body>
 </html>
