@@ -457,25 +457,40 @@
         if (m) { m.poster = finalUrl; saveToCloud(); }
       }
     }
-    // ==========================================
-// CODE TỰ ĐỘNG LƯU THỨ TỰ KHI KÉO THẢ PHIM
+   // ==========================================
+// CODE LƯU THỨ TỰ KÉO THẢ VÀO FIREBASE
 // ==========================================
 document.addEventListener('DOMContentLoaded', () => {
-  // Tìm khung chứa danh sách phim
   const grid = document.querySelector('.grid') || document.querySelector('.movie-grid') || document.getElementById('movieGrid');
   
   if (grid && typeof Sortable !== 'undefined') {
     new Sortable(grid, {
       animation: 150,
       onEnd: function () {
-        // Mỗi khi kéo thả xong, tự động lưu lại thứ tự mới vào máy
+        if (typeof movies === 'undefined' || !Array.isArray(movies)) return;
+
+        // 1. Lấy danh sách phim theo thứ tự mới hiển thị trên màn hình
+        const newMoviesOrder = [];
         const cards = grid.children;
-        const newOrder = [];
+
         Array.from(cards).forEach(card => {
           const title = card.querySelector('h3')?.innerText || card.querySelector('h2')?.innerText;
-          if (title) newOrder.push(title);
+          const foundMovie = movies.find(m => m.title === title || m.tenPhim === title);
+          if (foundMovie) newMoviesOrder.push(foundMovie);
         });
-        localStorage.setItem('movieOrder', JSON.stringify(newOrder));
+
+        // 2. Cập nhật mảng movies hiện tại
+        if (newMoviesOrder.length === movies.length) {
+          movies.length = 0;
+          movies.push(...newMoviesOrder);
+
+          // 3. Gọi hàm đồng bộ lên Cloud của bạn
+          if (typeof saveToCloud === 'function') {
+            saveToCloud();
+          } else if (typeof saveMovies === 'function') {
+            saveMovies();
+          }
+        }
       }
     });
   }
