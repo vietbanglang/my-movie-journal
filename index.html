@@ -457,6 +457,29 @@
         if (m) { m.poster = finalUrl; saveToCloud(); }
       }
     }
+    // ==========================================
+// CODE TỰ ĐỘNG LƯU THỨ TỰ KHI KÉO THẢ PHIM
+// ==========================================
+document.addEventListener('DOMContentLoaded', () => {
+  // Tìm khung chứa danh sách phim
+  const grid = document.querySelector('.grid') || document.querySelector('.movie-grid') || document.getElementById('movieGrid');
+  
+  if (grid && typeof Sortable !== 'undefined') {
+    new Sortable(grid, {
+      animation: 150,
+      onEnd: function () {
+        // Mỗi khi kéo thả xong, tự động lưu lại thứ tự mới vào máy
+        const cards = grid.children;
+        const newOrder = [];
+        Array.from(cards).forEach(card => {
+          const title = card.querySelector('h3')?.innerText || card.querySelector('h2')?.innerText;
+          if (title) newOrder.push(title);
+        });
+        localStorage.setItem('movieOrder', JSON.stringify(newOrder));
+      }
+    });
+  }
+});
   </script>
 </body>
 </html>
