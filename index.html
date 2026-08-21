@@ -244,14 +244,14 @@
     let movies = [];
     let sortableInstance = null;
 
+    // Tải dữ liệu từ Firebase và tự động sắp xếp theo thứ tự order
     db.on('value', (snapshot) => {
       const data = snapshot.val();
-      if (Array.isArray(data)) {
-        movies = data.filter(Boolean);
-      } else if (data && typeof data === 'object') {
-        movies = Object.values(data);
-      } else {
+      if (!data) {
         movies = [];
+      } else {
+        let tempArr = Array.isArray(data) ? data.filter(Boolean) : Object.values(data);
+        movies = tempArr.sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
       }
       render();
     });
@@ -272,9 +272,15 @@
       render();
     }
 
+    // Lưu dữ liệu an toàn dạng Object lên Firebase
     function saveToCloud() {
       if (!isAdmin) return;
-      db.set(movies);
+      const moviesObj = {};
+      movies.forEach((m, index) => {
+        m.order = index;
+        moviesObj[m.id] = m;
+      });
+      db.set(moviesObj);
     }
 
     function render() {
@@ -288,7 +294,7 @@
       grid.innerHTML = '';
 
       movies.forEach((m) => {
-        if (!m) return;
+        if (!m || !m.id) return;
         const card = document.createElement('div');
         card.className = `card ${isAdmin ? 'is-admin' : ''}`;
         card.setAttribute('data-id', m.id);
@@ -404,12 +410,13 @@
       const newMovie = {
         id: Date.now().toString(),
         title: 'Tên Phim Mới',
-        year: '2025',
+        year: '2026',
         genre: 'Thể loại',
         rating: 0,
         poster: '',
         country: 'TQ',
-        type: 'Bộ'
+        type: 'Bộ',
+        order: movies.length
       };
       movies.push(newMovie);
       saveToCloud();
