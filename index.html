@@ -155,7 +155,7 @@
       border: 1px solid var(--border-color);
       border-radius: 6px;
       padding: 8px;
-      margin-bottom: 10px;
+      margin-bottom: 12px;
     }
 
     .stars-wrapper { display: flex; justify-content: space-between; }
@@ -167,16 +167,36 @@
     .click-zone.left { left: 0; }
     .click-zone.right { right: 0; }
 
-    .note-input {
-      width: 100%;
-      border: none;
-      border-bottom: 1px dashed var(--border-color);
-      background: transparent;
-      font-family: var(--font-hand);
-      font-size: 0.82rem;
-      resize: none;
+    /* TAG SELECT STYLES */
+    .tags-container {
+      display: flex;
+      gap: 8px;
+      margin-top: auto;
+    }
+
+    .tag-select {
+      flex: 1;
+      padding: 6px 8px;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      background: #fbf9f6;
+      color: var(--text-main);
+      font-family: var(--font-body);
+      font-size: 0.78rem;
       outline: none;
-      height: 38px;
+      cursor: pointer;
+      appearance: none;
+      background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%20787571' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+      background-repeat: no-repeat;
+      background-position: right 6px center;
+      background-size: 12px;
+      padding-right: 20px;
+    }
+
+    .tag-select:disabled {
+      background-color: #f5f3ef;
+      cursor: default;
+      opacity: 0.9;
     }
   </style>
 </head>
@@ -200,7 +220,6 @@
   </div>
 
   <script>
-    // Mật khẩu đăng nhập quản trị của bạn
     const ADMIN_PASSWORD = "8438"; 
     let isAdmin = false;
 
@@ -290,7 +309,24 @@
             <div style="font-size:0.75rem; margin-top:4px; text-align:right;"><b>${(m.rating || 0).toFixed(1)}</b>/10</div>
           </div>
 
-          <textarea class="note-input" ${!isAdmin ? 'readonly' : ''} placeholder="${isAdmin ? 'Ghi chú review...' : ''}" onblur="updateField('${m.id}', 'note', this.value)">${m.note || ''}</textarea>
+          <div class="tags-container">
+            <select class="tag-select" ${!isAdmin ? 'disabled' : ''} onchange="updateField('${m.id}', 'country', this.value)">
+              <option value="TQ" ${m.country === 'TQ' ? 'selected' : ''}>🇨🇳 Trung Quốc</option>
+              <option value="HQ" ${m.country === 'HQ' ? 'selected' : ''}>🇰🇷 Hàn Quốc</option>
+              <option value="AM" ${m.country === 'AM' ? 'selected' : ''}>🇺🇸 Âu Mỹ</option>
+              <option value="NB" ${m.country === 'NB' ? 'selected' : ''}>🇯🇵 Nhật Bản</option>
+              <option value="VN" ${m.country === 'VN' ? 'selected' : ''}>🇻🇳 Việt Nam</option>
+              <option value="TL" ${m.country === 'TL' ? 'selected' : ''}>🇹🇭 Thái Lan</option>
+              <option value="Khac" ${m.country === 'Khac' ? 'selected' : ''}>🌐 Khác</option>
+            </select>
+
+            <select class="tag-select" ${!isAdmin ? 'disabled' : ''} onchange="updateField('${m.id}', 'type', this.value)">
+              <option value="Bộ" ${m.type === 'Bộ' ? 'selected' : ''}>📺 Phim Bộ</option>
+              <option value="Lẻ" ${m.type === 'Lẻ' ? 'selected' : ''}>🎬 Phim Lẻ</option>
+              <option value="Anime" ${m.type === 'Anime' ? 'selected' : ''}>🎨 Anime/Hoạt hình</option>
+              <option value="Show" ${m.type === 'Show' ? 'selected' : ''}>🎪 TV Show</option>
+            </select>
+          </div>
         `;
         grid.appendChild(card);
       });
@@ -328,7 +364,7 @@
     function updateField(id, field, val) {
       if (!isAdmin) return;
       const m = movies.find(x => x.id === id);
-      if (m) { m[field] = val.trim(); saveToCloud(); }
+      if (m) { m[field] = val; saveToCloud(); }
     }
 
     function addNewMovie() {
@@ -340,7 +376,8 @@
         genre: 'Thể loại',
         rating: 0,
         poster: '',
-        note: ''
+        country: 'TQ',
+        type: 'Bộ'
       };
       movies.push(newMovie);
       saveToCloud();
