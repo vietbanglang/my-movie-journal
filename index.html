@@ -10,6 +10,8 @@
   
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+  <!-- Thư viện Kéo thả chuột -->
+  <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
 
   <style>
     :root {
@@ -109,6 +111,9 @@
       flex-direction: column;
     }
 
+    .card.is-admin { cursor: grab; }
+    .card.is-admin:active { cursor: grabbing; }
+
     .btn-delete {
       position: absolute;
       top: 8px;
@@ -167,7 +172,6 @@
     .click-zone.left { left: 0; }
     .click-zone.right { right: 0; }
 
-    /* TAG SELECT STYLES */
     .tags-container {
       display: flex;
       gap: 8px;
@@ -220,7 +224,7 @@
   </div>
 
   <script>
-    const ADMIN_PASSWORD = "8438"; 
+    const ADMIN_PASSWORD = "123456"; 
     let isAdmin = false;
 
     const firebaseConfig = {
@@ -253,7 +257,7 @@
         const pwd = prompt("Nhập mật khẩu quản trị để chỉnh sửa:");
         if (pwd === ADMIN_PASSWORD) {
           isAdmin = true;
-          alert("Đăng nhập thành công! Bạn có thể chỉnh sửa trang web.");
+          alert("Đăng nhập thành công! Giữ chuột trái vào thẻ phim để kéo thả xếp lại vị trí.");
         } else if (pwd !== null) {
           alert("Mật khẩu không đúng!");
         }
@@ -280,7 +284,8 @@
 
       movies.forEach((m) => {
         const card = document.createElement('div');
-        card.className = 'card';
+        card.className = `card ${isAdmin ? 'is-admin' : ''}`;
+        card.setAttribute('data-id', m.id);
         card.innerHTML = `
           ${isAdmin ? `<button class="btn-delete" onclick="deleteMovie('${m.id}')">✕</button>` : ''}
 
@@ -330,6 +335,22 @@
         `;
         grid.appendChild(card);
       });
+
+      if (isAdmin) {
+        new Sortable(grid, {
+          animation: 150,
+          onEnd: function () {
+            const newMoviesOrder = [];
+            grid.querySelectorAll('.card').forEach(card => {
+              const id = card.getAttribute('data-id');
+              const found = movies.find(m => m.id === id);
+              if (found) newMoviesOrder.push(found);
+            });
+            movies = newMoviesOrder;
+            saveToCloud();
+          }
+        });
+      }
 
       updateStats();
     }
