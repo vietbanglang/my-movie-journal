@@ -62,8 +62,9 @@
       display: flex;
       justify-content: center;
       align-items: center;
-      gap: 15px;
+      gap: 12px;
       flex-wrap: wrap;
+      margin-bottom: 20px;
     }
 
     .stats-badge {
@@ -89,6 +90,39 @@
 
     .btn:hover { opacity: 0.9; transform: translateY(-1px); }
     .btn-auth { background: #d4a359; color: #fff; }
+
+    /* Filter Tabs Style */
+    .filter-tabs {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 30px;
+    }
+
+    .tab-btn {
+      background: #ffffff;
+      border: 1px solid var(--border-color);
+      color: var(--text-muted);
+      padding: 7px 16px;
+      border-radius: 20px;
+      font-size: 0.82rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .tab-btn:hover {
+      border-color: #c8c2b7;
+      color: var(--text-main);
+    }
+
+    .tab-btn.active {
+      background: var(--text-main);
+      color: #ffffff;
+      border-color: var(--text-main);
+    }
 
     .grid {
       display: grid;
@@ -203,7 +237,6 @@
       opacity: 0.9;
     }
   </style>
-  <link rel="manifest" href="manifest.json">
 </head>
 <body>
   <div class="container">
@@ -218,6 +251,18 @@
         <button id="btn-add" class="btn" style="display:none;" onclick="addNewMovie()">+ Thêm Phim Mới</button>
         <button id="btn-auth" class="btn btn-auth" onclick="toggleAuth()">🔓 Đăng Nhập Quản Trị</button>
       </div>
+
+      <!-- Thanh chọn Tab Quốc gia -->
+      <div class="filter-tabs">
+        <button class="tab-btn active" onclick="setFilter('ALL', this)">Tất cả</button>
+        <button class="tab-btn" onclick="setFilter('TQ', this)">🇨🇳 Trung Quốc</button>
+        <button class="tab-btn" onclick="setFilter('HQ', this)">🇰🇷 Hàn Quốc</button>
+        <button class="tab-btn" onclick="setFilter('AM', this)">🇺🇸 Âu Mỹ</button>
+        <button class="tab-btn" onclick="setFilter('NB', this)">🇯🇵 Nhật Bản</button>
+        <button class="tab-btn" onclick="setFilter('VN', this)">🇻🇳 Việt Nam</button>
+        <button class="tab-btn" onclick="setFilter('TL', this)">🇹🇭 Thái Lan</button>
+        <button class="tab-btn" onclick="setFilter('Khac', this)">🌐 Khác</button>
+      </div>
     </div>
 
     <div class="grid" id="movie-grid"></div>
@@ -226,6 +271,7 @@
   <script>
     const ADMIN_PASSWORD = "8438"; 
     let isAdmin = false;
+    let currentFilter = 'ALL';
 
     const firebaseConfig = {
       apiKey: "AIzaSyCXPVd1-GAddLziXcyT0n3ZAGzpMdLXxSQ",
@@ -244,7 +290,6 @@
     let movies = [];
     let sortableInstance = null;
 
-    // Tải dữ liệu từ Firebase và tự động sắp xếp theo thứ tự order
     db.on('value', (snapshot) => {
       const data = snapshot.val();
       if (!data) {
@@ -264,7 +309,7 @@
         const pwd = prompt("Nhập mật khẩu quản trị để chỉnh sửa:");
         if (pwd === ADMIN_PASSWORD) {
           isAdmin = true;
-          alert("Đăng nhập thành công! Giữ chuột trái vào thẻ phim để kéo thả xếp lại vị trí.");
+          alert("Đăng nhập thành công!");
         } else if (pwd !== null) {
           alert("Mật khẩu không đúng!");
         }
@@ -272,7 +317,6 @@
       render();
     }
 
-    // Lưu dữ liệu an toàn dạng Object lên Firebase
     function saveToCloud() {
       if (!isAdmin) return;
       const moviesObj = {};
@@ -281,6 +325,13 @@
         moviesObj[m.id] = m;
       });
       db.set(moviesObj);
+    }
+
+    function setFilter(countryCode, btnElement) {
+      currentFilter = countryCode;
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      btnElement.classList.add('active');
+      render();
     }
 
     function render() {
@@ -293,7 +344,12 @@
 
       grid.innerHTML = '';
 
-      movies.forEach((m) => {
+      // Lọc danh sách phim theo quốc gia
+      const filteredMovies = currentFilter === 'ALL' 
+        ? movies 
+        : movies.filter(m => m.country === currentFilter);
+
+      filteredMovies.forEach((m) => {
         if (!m || !m.id) return;
         const card = document.createElement('div');
         card.className = `card ${isAdmin ? 'is-admin' : ''}`;
@@ -353,7 +409,8 @@
         sortableInstance = null;
       }
 
-      if (isAdmin) {
+      // Kéo thả chỉ kích hoạt khi đang ở tab "Tất cả" để tránh làm lộn xộn thứ tự
+      if (isAdmin && currentFilter === 'ALL') {
         sortableInstance = new Sortable(grid, {
           animation: 150,
           onEnd: function () {
@@ -369,7 +426,7 @@
         });
       }
 
-      updateStats();
+      updateStats(filteredMovies);
     }
 
     function renderStars(id, rating) {
@@ -402,11 +459,15 @@
     function updateField(id, field, val) {
       if (!isAdmin) return;
       const m = movies.find(x => x.id === id);
-      if (m) { m[field] = val; saveToCloud(); }
+      if (m) { 
+        m[field] = val; 
+        saveToCloud(); 
+      }
     }
 
     function addNewMovie() {
       if (!isAdmin) return;
+      const defaultCountry = currentFilter === 'ALL' ? 'TQ' : currentFilter;
       const newMovie = {
         id: Date.now().toString(),
         title: 'Tên Phim Mới',
@@ -414,7 +475,7 @@
         genre: 'Thể loại',
         rating: 0,
         poster: '',
-        country: 'TQ',
+        country: defaultCountry,
         type: 'Bộ',
         order: movies.length
       };
@@ -428,11 +489,11 @@
       saveToCloud();
     }
 
-    function updateStats() {
-      document.getElementById('total-count').innerText = movies.length;
-      if (movies.length === 0) { document.getElementById('avg-score').innerText = '0.0'; return; }
-      const sum = movies.reduce((acc, curr) => acc + (curr.rating || 0), 0);
-      document.getElementById('avg-score').innerText = (sum / movies.length).toFixed(1);
+    function updateStats(currentList) {
+      document.getElementById('total-count').innerText = currentList.length;
+      if (currentList.length === 0) { document.getElementById('avg-score').innerText = '0.0'; return; }
+      const sum = currentList.reduce((acc, curr) => acc + (curr.rating || 0), 0);
+      document.getElementById('avg-score').innerText = (sum / currentList.length).toFixed(1);
     }
 
     function handlePosterClick(id) {
