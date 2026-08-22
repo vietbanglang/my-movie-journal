@@ -12,9 +12,14 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Lora:ital,wght@0,400;0,600;1,400&family=Plus+Jakarta+Sans:wght@400;500;600&display=swap" rel="stylesheet">
   
+  <!-- Firebase & SortableJS -->
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+  
+  <!-- Thư viện Chụp ảnh thẻ phim & Xuất PDF -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
   <style>
     :root {
@@ -29,6 +34,37 @@
       --font-heading: 'Cinzel', serif;
       --font-body: 'Plus Jakarta Sans', sans-serif;
       --font-hand: 'Lora', serif;
+
+      /* Colors for Light Mode Cards */
+      --tq-bg: #ffe6e6; --tq-border: #f19999;
+      --hq-bg: #e0f0ff; --hq-border: #8bbdf5;
+      --am-bg: #f2e2fe; --am-border: #cc9bf4;
+      --nb-bg: #ffe2ee; --nb-border: #f79cc0;
+      --vn-bg: #fff9cf; --vn-border: #f1d460;
+      --tl-bg: #dcf5d7; --tl-border: #8edc82;
+      --khac-bg: #ebeae6; --khac-border: #beb8ad;
+      --modal-bg: #ffffff;
+    }
+
+    /* DARK MODE / CINEMA MODE */
+    body.dark-mode {
+      --bg-color: #121214;
+      --card-bg: #1e1e24;
+      --text-main: #e6e6e6;
+      --text-muted: #a0a0a0;
+      --border-color: #33333d;
+      --star-empty: #444450;
+      --shadow-sm: 0 4px 20px rgba(0, 0, 0, 0.4);
+
+      /* Dark Mode Country Card Colors */
+      --tq-bg: #2d1818; --tq-border: #662b2b;
+      --hq-bg: #142433; --hq-border: #284b70;
+      --am-bg: #24182d; --am-border: #522b66;
+      --nb-bg: #2d1822; --nb-border: #662b45;
+      --vn-bg: #2d2a18; --vn-border: #665c2b;
+      --tl-bg: #182d1a; --tl-border: #2b6630;
+      --khac-bg: #1f1f22; --khac-border: #44444a;
+      --modal-bg: #1e1e24;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -39,12 +75,13 @@
       font-family: var(--font-body);
       min-height: 100vh;
       padding: 40px 20px;
-      background-image: radial-gradient(#e2dad0 0.8px, transparent 0.8px);
+      background-image: radial-gradient(var(--border-color) 0.8px, transparent 0.8px);
       background-size: 16px 16px;
+      transition: background-color 0.3s, color 0.3s;
     }
 
     .container { max-width: 1280px; margin: 0 auto; }
-    .header { text-align: center; margin-bottom: 35px; }
+    .header { text-align: center; margin-bottom: 25px; }
 
     .title {
       font-family: var(--font-heading);
@@ -65,7 +102,7 @@
       display: flex;
       justify-content: center;
       align-items: center;
-      gap: 12px;
+      gap: 10px;
       flex-wrap: wrap;
       margin-bottom: 20px;
     }
@@ -73,27 +110,72 @@
     .stats-badge {
       background: var(--card-bg);
       border: 1px solid var(--border-color);
-      padding: 8px 18px;
+      padding: 8px 16px;
       border-radius: 30px;
-      font-size: 0.88rem;
+      font-size: 0.85rem;
       box-shadow: var(--shadow-sm);
     }
 
     .btn {
       background: var(--text-main);
-      color: #fff;
+      color: var(--bg-color);
       border: none;
-      padding: 9px 18px;
+      padding: 9px 16px;
       border-radius: 30px;
-      font-size: 0.85rem;
+      font-size: 0.83rem;
       font-weight: 500;
       cursor: pointer;
       transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
     }
 
     .btn:hover { opacity: 0.9; transform: translateY(-1px); }
     .btn-auth { background: #d4a359; color: #fff; }
+    .btn-darkmode { background: #4a4a5a; color: #fff; }
+    .btn-export { background: #2e7d32; color: #fff; }
 
+    /* SEARCH & SORT BAR */
+    .controls-bar {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+
+    .search-box {
+      position: relative;
+      width: 100%;
+      max-width: 420px;
+    }
+
+    .search-input {
+      width: 100%;
+      padding: 10px 16px;
+      border-radius: 25px;
+      border: 1px solid var(--border-color);
+      background: var(--card-bg);
+      color: var(--text-main);
+      font-size: 0.88rem;
+      outline: none;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .sort-select {
+      padding: 10px 16px;
+      border-radius: 25px;
+      border: 1px solid var(--border-color);
+      background: var(--card-bg);
+      color: var(--text-main);
+      font-size: 0.85rem;
+      outline: none;
+      cursor: pointer;
+      box-shadow: var(--shadow-sm);
+    }
+
+    /* FILTER TABS */
     .filter-tabs {
       display: flex;
       justify-content: center;
@@ -103,7 +185,7 @@
     }
 
     .tab-btn {
-      background: #ffffff;
+      background: var(--card-bg);
       border: 1px solid var(--border-color);
       color: var(--text-muted);
       padding: 7px 16px;
@@ -115,14 +197,9 @@
       box-shadow: var(--shadow-sm);
     }
 
-    .tab-btn:hover {
-      border-color: #c8c2b7;
-      color: var(--text-main);
-    }
-
     .tab-btn.active {
       background: var(--text-main);
-      color: #ffffff;
+      color: var(--bg-color);
       border-color: var(--text-main);
     }
 
@@ -147,38 +224,49 @@
       transition: all 0.3s ease;
     }
 
-    /* ĐIỀU CHỈNH MÀU NỀN & VIỀN ĐẬM ĐẮN NỔI BẬT HƠN */
-    .card[data-country="TQ"] { background-color: #ffe6e6; border-color: #f19999; } /* Trung Quốc - Hồng đỏ */
-    .card[data-country="HQ"] { background-color: #e0f0ff; border-color: #8bbdf5; } /* Hàn Quốc - Xanh dương */
-    .card[data-country="AM"] { background-color: #f2e2fe; border-color: #cc9bf4; } /* Âu Mỹ - Tím */
-    .card[data-country="NB"] { background-color: #ffe2ee; border-color: #f79cc0; } /* Nhật Bản - Hồng tươi */
-    .card[data-country="VN"] { background-color: #fff9cf; border-color: #f1d460; } /* Việt Nam - Vàng tươi */
-    .card[data-country="TL"] { background-color: #dcf5d7; border-color: #8edc82; } /* Thái Lan - Xanh lá */
-    .card[data-country="Khac"] { background-color: #ebeae6; border-color: #beb8ad; } /* Khác - Xám */
+    /* Country Card Colors */
+    .card[data-country="TQ"] { background-color: var(--tq-bg); border-color: var(--tq-border); }
+    .card[data-country="HQ"] { background-color: var(--hq-bg); border-color: var(--hq-border); }
+    .card[data-country="AM"] { background-color: var(--am-bg); border-color: var(--am-border); }
+    .card[data-country="NB"] { background-color: var(--nb-bg); border-color: var(--nb-border); }
+    .card[data-country="VN"] { background-color: var(--vn-bg); border-color: var(--vn-border); }
+    .card[data-country="TL"] { background-color: var(--tl-bg); border-color: var(--tl-border); }
+    .card[data-country="Khac"] { background-color: var(--khac-bg); border-color: var(--khac-border); }
 
     .card.is-admin { cursor: grab; }
     .card.is-admin:active { cursor: grabbing; }
 
-    .btn-delete {
+    .card-actions {
       position: absolute;
       top: 8px;
       right: 8px;
-      width: 26px;
-      height: 26px;
-      border-radius: 50%;
-      background: #fff;
-      border: 1px solid var(--border-color);
-      color: #888;
-      cursor: pointer;
+      display: flex;
+      gap: 5px;
       z-index: 10;
     }
+
+    .icon-btn {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+      transition: transform 0.1s;
+    }
+    .icon-btn:hover { transform: scale(1.1); }
 
     .poster-frame {
       width: 100%;
       aspect-ratio: 2 / 3;
       border: 1px dashed rgba(0,0,0,0.2);
       border-radius: 6px;
-      background: rgba(255,255,255,0.85);
+      background: rgba(255,255,255,0.2);
       position: relative;
       overflow: hidden;
       display: flex;
@@ -188,20 +276,20 @@
       margin-bottom: 12px;
       text-align: center;
       padding: 8px;
+      cursor: pointer;
     }
 
-    .poster-frame.can-edit { cursor: pointer; }
     .poster-frame img { width: 100%; height: 100%; object-fit: cover; }
     .file-input { display: none; }
 
     .editable-text { outline: none; padding: 2px 4px; border-radius: 3px; }
-    .editable-text.can-edit:focus { background: rgba(255,255,255,0.9); }
+    .editable-text.can-edit:focus { background: rgba(255,255,255,0.4); }
 
     .movie-title { font-family: var(--font-hand); font-size: 1.1rem; font-weight: 600; }
-    .movie-meta { font-size: 0.75rem; color: var(--text-muted); margin-bottom: 10px; display: flex; gap: 4px; }
+    .movie-meta { font-size: 0.75rem; color: var(--text-muted); margin-bottom: 10px; display: flex; gap: 4px; flex-wrap: wrap; }
 
     .rating-container {
-      background: rgba(255,255,255,0.85);
+      background: rgba(255,255,255,0.25);
       border: 1px solid rgba(0,0,0,0.08);
       border-radius: 6px;
       padding: 8px;
@@ -228,40 +316,106 @@
       padding: 6px 8px;
       border: 1px solid rgba(0,0,0,0.12);
       border-radius: 6px;
-      background: rgba(255,255,255,0.9);
+      background: rgba(255,255,255,0.3);
       color: var(--text-main);
       font-family: var(--font-body);
       font-size: 0.78rem;
       outline: none;
       cursor: pointer;
-      appearance: none;
-      background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%20787571' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
-      background-repeat: no-repeat;
-      background-position: right 6px center;
-      background-size: 12px;
-      padding-right: 20px;
     }
 
-    .tag-select:disabled {
-      cursor: default;
-      opacity: 0.95;
+    .tag-select:disabled { cursor: default; opacity: 0.95; }
+
+    /* MODAL POPUP FOR POSTER & DETAILS */
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0, 0, 0, 0.75);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s;
     }
+
+    .modal-overlay.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .modal-content {
+      background: var(--modal-bg);
+      color: var(--text-main);
+      border-radius: 12px;
+      padding: 24px;
+      max-width: 650px;
+      width: 90%;
+      max-height: 90vh;
+      overflow-y: auto;
+      position: relative;
+      display: flex;
+      gap: 20px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    }
+
+    @media (max-width: 600px) {
+      .modal-content { flex-direction: column; }
+    }
+
+    .modal-close {
+      position: absolute;
+      top: 12px; right: 12px;
+      font-size: 1.2rem;
+      background: none; border: none;
+      color: var(--text-main); cursor: pointer;
+    }
+
+    .modal-poster {
+      width: 200px;
+      border-radius: 8px;
+      object-fit: cover;
+      aspect-ratio: 2/3;
+      flex-shrink: 0;
+    }
+
+    .modal-info { display: flex; flex-direction: column; gap: 8px; }
   </style>
 </head>
 <body>
   <div class="container">
     <div class="header">
       <h1 class="title">My Movie Journal</h1>
-      <p class="subtitle">"Memories, emotions, and personal cinema collection"</p>
+      <p class="subtitle">"VIETBANGLANG"</p>
       
       <div class="toolbar">
         <div class="stats-badge">Tổng số phim: <span id="total-count">0</span></div>
         <div class="stats-badge">Điểm trung bình: <span id="avg-score">0.0</span>/10</div>
         
+        <button class="btn btn-darkmode" onclick="toggleDarkMode()">🎬 Chế độ Tối</button>
+        <button class="btn btn-export" onclick="exportCSV()">📊 Xuất Excel/CSV</button>
+        <button class="btn btn-export" onclick="exportPDFWithPosters()">📄 Xuất PDF (Grid 3x3)</button>
+
         <button id="btn-add" class="btn" style="display:none;" onclick="addNewMovie()">+ Thêm Phim Mới</button>
         <button id="btn-auth" class="btn btn-auth" onclick="toggleAuth()">🔓 Đăng Nhập Quản Trị</button>
       </div>
 
+      <!-- SEARCH & SORT CONTROL BAR -->
+      <div class="controls-bar">
+        <div class="search-box">
+          <input type="text" id="search-input" class="search-input" placeholder="🔍 Tìm tên phim, diễn viên, năm..." oninput="render()">
+        </div>
+        <select id="sort-select" class="sort-select" onchange="render()">
+          <option value="custom">Thứ tự tùy chỉnh (Kéo thả)</option>
+          <option value="newest">⏳ Phim mới thêm gần đây</option>
+          <option value="rating-desc">⭐ Điểm từ cao đến thấp</option>
+          <option value="rating-asc">⭐ Điểm từ thấp đến cao</option>
+          <option value="year-desc">📅 Năm phát hành mới nhất</option>
+        </select>
+      </div>
+
+      <!-- FILTER TABS -->
       <div class="filter-tabs">
         <button class="tab-btn active" onclick="setFilter('ALL', this)">Tất cả</button>
         <button class="tab-btn" onclick="setFilter('TQ', this)">🇨🇳 Trung Quốc</button>
@@ -275,6 +429,20 @@
     </div>
 
     <div class="grid" id="movie-grid"></div>
+  </div>
+
+  <!-- MODAL POPUP PHÓNG TO POSTER & CHI TIẾT -->
+  <div class="modal-overlay" id="movie-modal" onclick="closeModal(event)">
+    <div class="modal-content" onclick="event.stopPropagation()">
+      <button class="modal-close" onclick="closeModal()">✕</button>
+      <img id="modal-img" class="modal-poster" src="" alt="Poster">
+      <div class="modal-info">
+        <h2 id="modal-title" style="font-family: var(--font-hand);"></h2>
+        <p id="modal-meta" style="color: var(--text-muted); font-size: 0.9rem;"></p>
+        <p id="modal-rating" style="font-size: 1.1rem; color: #d4a359; font-weight: bold;"></p>
+        <p id="modal-tags" style="font-size: 0.85rem; margin-top: 10px;"></p>
+      </div>
+    </div>
   </div>
 
   <script>
@@ -305,10 +473,20 @@
         movies = [];
       } else {
         let tempArr = Array.isArray(data) ? data.filter(Boolean) : Object.values(data);
-        movies = tempArr.sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+        movies = tempArr;
       }
       render();
     });
+
+    /* TÍNH NĂNG TÌM KIẾM THÔNG MINH (BỎ DẤU, KHOẢNG TRẮNG, GẠCH NỐI) */
+    function normalizeStr(str) {
+      if (!str) return '';
+      return str
+        .toLowerCase()
+        .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // Bỏ dấu tiếng Việt
+        .replace(/đ/g, "d").replace(/Đ/g, "d")
+        .replace(/[\s\-_]/g, ""); // Bỏ khoảng trắng, dấu gạch ngang, gạch dưới
+    }
 
     function toggleAuth() {
       if (isAdmin) {
@@ -324,6 +502,10 @@
         }
       }
       render();
+    }
+
+    function toggleDarkMode() {
+      document.body.classList.toggle('dark-mode');
     }
 
     function saveToCloud() {
@@ -347,32 +529,58 @@
       const grid = document.getElementById('movie-grid');
       const btnAdd = document.getElementById('btn-add');
       const btnAuth = document.getElementById('btn-auth');
+      const searchKey = normalizeStr(document.getElementById('search-input').value);
+      const sortType = document.getElementById('sort-select').value;
 
       btnAdd.style.display = isAdmin ? 'inline-block' : 'none';
       btnAuth.innerText = isAdmin ? '🔒 Thoát Quản Trị' : '🔓 Đăng Nhập Quản Trị';
 
       grid.innerHTML = '';
 
-      const filteredMovies = currentFilter === 'ALL' 
-        ? movies 
+      // 1. Lọc theo Quốc gia
+      let processedList = currentFilter === 'ALL' 
+        ? [...movies] 
         : movies.filter(m => m.country === currentFilter);
 
-      filteredMovies.forEach((m) => {
+      // 2. Tìm kiếm siêu linh hoạt
+      if (searchKey) {
+        processedList = processedList.filter(m => {
+          const titleNorm = normalizeStr(m.title);
+          const genreNorm = normalizeStr(m.genre);
+          const yearNorm = normalizeStr(m.year);
+          return titleNorm.includes(searchKey) || genreNorm.includes(searchKey) || yearNorm.includes(searchKey);
+        });
+      }
+
+      // 3. Sắp xếp danh sách
+      if (sortType === 'newest') {
+        processedList.sort((a, b) => (Number(b.id) || 0) - (Number(a.id) || 0));
+      } else if (sortType === 'rating-desc') {
+        processedList.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+      } else if (sortType === 'rating-asc') {
+        processedList.sort((a, b) => (a.rating || 0) - (b.rating || 0));
+      } else if (sortType === 'year-desc') {
+        processedList.sort((a, b) => (parseInt(b.year) || 0) - (parseInt(a.year) || 0));
+      } else {
+        processedList.sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+      }
+
+      processedList.forEach((m) => {
         if (!m || !m.id) return;
         const card = document.createElement('div');
         card.className = `card ${isAdmin ? 'is-admin' : ''}`;
         card.setAttribute('data-id', m.id);
         card.setAttribute('data-country', m.country || 'TQ');
         card.innerHTML = `
-          ${isAdmin ? `<button class="btn-delete" onclick="deleteMovie('${m.id}')">✕</button>` : ''}
+          <div class="card-actions">
+            <button class="icon-btn" title="Chụp ảnh thẻ phim" onclick="shareCard('${m.id}')">📸</button>
+            ${isAdmin ? `<button class="icon-btn" title="Xóa" onclick="deleteMovie('${m.id}')">✕</button>` : ''}
+          </div>
 
-          <div class="poster-frame ${isAdmin ? 'can-edit' : ''}" 
-               onclick="${isAdmin ? `handlePosterClick('${m.id}')` : ''}"
-               ondragover="event.preventDefault()" 
-               ondrop="${isAdmin ? `handleDrop(event, '${m.id}')` : ''}">
+          <div class="poster-frame" onclick="handlePosterClick('${m.id}')">
             ${m.poster 
               ? `<img src="${m.poster}">` 
-              : `<div style="font-size:0.75rem; color:#888;">
+              : `<div style="font-size:0.75rem; color:var(--text-muted);">
                    ${isAdmin ? 'Bấm chọn file / Dán link ảnh' : 'Chưa có poster'}
                  </div>`}
             <input type="file" id="file-${m.id}" class="file-input" accept="image/*" onchange="handleFileSelect(event, '${m.id}')">
@@ -418,7 +626,7 @@
         sortableInstance = null;
       }
 
-      if (isAdmin && currentFilter === 'ALL') {
+      if (isAdmin && currentFilter === 'ALL' && sortType === 'custom' && !searchKey) {
         sortableInstance = new Sortable(grid, {
           animation: 150,
           onEnd: function () {
@@ -434,7 +642,7 @@
         });
       }
 
-      updateStats(filteredMovies);
+      updateStats(processedList);
     }
 
     function renderStars(id, rating) {
@@ -480,7 +688,7 @@
         id: Date.now().toString(),
         title: 'Tên Phim Mới',
         year: '2026',
-        genre: 'Thể loại',
+        genre: 'Thể loại / Diễn viên',
         rating: 0,
         poster: '',
         country: defaultCountry,
@@ -505,14 +713,28 @@
     }
 
     function handlePosterClick(id) {
-      if (!isAdmin) return;
-      const choice = prompt("Nhập 1 để TẢI FILE TỪ MÁY TÍNH\nHoặc DÁN LINK ẢNH trực tiếp vào đây:");
-      if (choice === '1') {
-        document.getElementById(`file-${id}`).click();
-      } else if (choice && choice.trim().startsWith('http')) {
-        const m = movies.find(x => x.id === id);
-        if (m) { m.poster = choice.trim(); saveToCloud(); }
+      const m = movies.find(x => x.id === id);
+      if (!m) return;
+
+      if (isAdmin) {
+        const choice = prompt("Nhập 1 để TẢI FILE TỪ MÁY TÍNH\nHoặc DÁN LINK ẢNH trực tiếp vào đây:");
+        if (choice === '1') {
+          document.getElementById(`file-${id}`).click();
+        } else if (choice && choice.trim().startsWith('http')) {
+          m.poster = choice.trim(); saveToCloud();
+        }
+      } else {
+        document.getElementById('modal-img').src = m.poster || 'https://via.placeholder.com/200x300?text=No+Poster';
+        document.getElementById('modal-title').innerText = m.title || 'Chưa có tên';
+        document.getElementById('modal-meta').innerText = `${m.year || ''} • ${m.genre || ''}`;
+        document.getElementById('modal-rating').innerText = `⭐ ${m.rating || 0}/10`;
+        document.getElementById('modal-tags').innerText = `Quốc gia: ${m.country || 'TQ'} | Loại: ${m.type || 'Bộ'}`;
+        document.getElementById('movie-modal').classList.add('active');
       }
+    }
+
+    function closeModal(e) {
+      document.getElementById('movie-modal').classList.remove('active');
     }
 
     function handleFileSelect(e, id) {
@@ -528,21 +750,157 @@
       }
     }
 
-    function handleDrop(e, id) {
-      if (!isAdmin) return;
-      e.preventDefault();
-      const imageUrl = e.dataTransfer.getData('text/html');
-      const srcMatch = imageUrl ? imageUrl.match(/src\s*=\s*"([^"]+)"/) : null;
-      const directUrl = e.dataTransfer.getData('text/plain');
+    /* CHỤP ẢNH THẺ PHIM ĐỂ CHIA SẺ */
+    function shareCard(id) {
+      const cardEl = document.querySelector(`.card[data-id="${id}"]`);
+      if (!cardEl) return;
+      
+      html2canvas(cardEl, { scale: 2 }).then(canvas => {
+        const link = document.createElement('a');
+        link.download = `movie-card-${id}.png`;
+        link.href = canvas.toDataURL();
+        link.click();
+      });
+    }
 
-      let finalUrl = '';
-      if (srcMatch && srcMatch[1]) finalUrl = srcMatch[1];
-      else if (directUrl && directUrl.startsWith('http')) finalUrl = directUrl;
+    /* XUẤT EXCEL / CSV */
+    function exportCSV() {
+      if (movies.length === 0) { alert("Chưa có dữ liệu phim!"); return; }
+      let csvContent = "\uFEFF"; // UTF-8 BOM
+      csvContent += "STT,Tên Phim,Năm,Thể loại/Diễn viên,Đánh giá,Quốc gia,Loại Phim\n";
 
-      if (finalUrl) {
-        const m = movies.find(x => x.id === id);
-        if (m) { m.poster = finalUrl; saveToCloud(); }
+      movies.forEach((m, idx) => {
+        csvContent += `"${idx + 1}","${m.title || ''}","${m.year || ''}","${m.genre || ''}","${m.rating || 0}","${m.country || ''}","${m.type || ''}"\n`;
+      });
+
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = `Danh_sach_phim_${new Date().toISOString().slice(0,10)}.csv`;
+      link.click();
+    }
+
+    /* XUẤT PDF CÓ POSTER (LỌC THEO QUỐC GIA ĐANG CHỌN - LƯỚI 3x3) */
+    async function exportPDFWithPosters() {
+      // 1. Lấy danh sách phim theo đúng tab Quốc gia đang được chọn trên màn hình
+      let exportList = currentFilter === 'ALL' 
+        ? [...movies] 
+        : movies.filter(m => m.country === currentFilter);
+
+      // 2. Nếu đang có từ khóa tìm kiếm, lọc luôn theo từ khóa đó
+      const searchKey = normalizeStr(document.getElementById('search-input').value);
+      if (searchKey) {
+        exportList = exportList.filter(m => {
+          const titleNorm = normalizeStr(m.title);
+          const genreNorm = normalizeStr(m.genre);
+          const yearNorm = normalizeStr(m.year);
+          return titleNorm.includes(searchKey) || genreNorm.includes(searchKey) || yearNorm.includes(searchKey);
+        });
       }
+
+      if (exportList.length === 0) { 
+        alert("Không có phim nào trong danh mục này để xuất PDF!"); 
+        return; 
+      }
+
+      const { jsPDF } = window.jspdf;
+      const pdf = new jsPDF('p', 'mm', 'a4'); // Trang A4
+      
+      const pageWidth = 210;
+      const pageHeight = 297;
+      
+      const marginX = 15;
+      const startY = 25;
+      const colWidth = 56;  // Độ rộng 1 ô
+      const rowHeight = 80; // Độ cao 1 ô (Poster + Text)
+      const gapX = 6;       // Khoảng cách giữa các cột
+      const gapY = 8;       // Khoảng cách giữa các hàng
+
+      // Thống kê tên danh mục để làm tiêu đề file PDF
+      const categoryNames = {
+        'ALL': 'Tất cả phim',
+        'TQ': 'Phim Trung Quốc',
+        'HQ': 'Phim Hàn Quốc',
+        'AM': 'Phim Âu Mỹ',
+        'NB': 'Phim Nhật Bản',
+        'VN': 'Phim Việt Nam',
+        'TL': 'Phim Thái Lan',
+        'Khac': 'Phim Khác'
+      };
+      const categoryTitle = categoryNames[currentFilter] || 'Danh sách phim';
+
+      // Load Image Helper
+      const loadImage = (url) => {
+        return new Promise((resolve) => {
+          if (!url) resolve(null);
+          const img = new Image();
+          img.crossOrigin = 'Anonymous';
+          img.onload = () => resolve(img);
+          img.onerror = () => resolve(null);
+          img.src = url;
+        });
+      };
+
+      alert(`Đang tạo file PDF cho [${categoryTitle}] (${exportList.length} phim), vui lòng chờ...`);
+
+      // Tiêu đề trang 1
+      pdf.setFont("Helvetica", "bold");
+      pdf.setFontSize(15);
+      pdf.text(`MY MOVIE JOURNAL - ${categoryTitle.toUpperCase()}`, pageWidth / 2, 15, { align: "center" });
+
+      for (let i = 0; i < exportList.length; i++) {
+        const m = exportList[i];
+        
+        // Cứ mỗi 9 phim thì tạo trang mới (trừ phim đầu tiên)
+        if (i > 0 && i % 9 === 0) {
+          pdf.addPage();
+          pdf.setFont("Helvetica", "bold");
+          pdf.setFontSize(14);
+          pdf.text(`MY MOVIE JOURNAL - ${categoryTitle.toUpperCase()}`, pageWidth / 2, 15, { align: "center" });
+        }
+
+        const indexInPage = i % 9;
+        const col = indexInPage % 3;             // Cột 0, 1, 2
+        const row = Math.floor(indexInPage / 3); // Hàng 0, 1, 2
+
+        const x = marginX + col * (colWidth + gapX);
+        const y = startY + row * (rowHeight + gapY);
+
+        // Khung nền ô phim
+        pdf.setDrawColor(220, 220, 220);
+        pdf.setFillColor(250, 250, 250);
+        pdf.roundedRect(x, y, colWidth, rowHeight, 3, 3, 'FD');
+
+        // Vẽ Poster nếu có
+        if (m.poster) {
+          const img = await loadImage(m.poster);
+          if (img) {
+            try {
+              pdf.addImage(img, 'JPEG', x + 3, y + 3, colWidth - 6, 52);
+            } catch (e) {
+              // Lỗi định dạng ảnh thì bỏ qua ảnh
+            }
+          }
+        }
+
+        // Tên Phim
+        pdf.setFont("Helvetica", "bold");
+        pdf.setFontSize(9);
+        pdf.setTextColor(40, 40, 40);
+        const titleText = m.title || 'Chưa có tên';
+        const truncatedTitle = titleText.length > 20 ? titleText.substring(0, 18) + '..' : titleText;
+        pdf.text(truncatedTitle, x + 3, y + 60);
+
+        // Năm & Điểm
+        pdf.setFont("Helvetica", "normal");
+        pdf.setFontSize(8);
+        pdf.setTextColor(100, 100, 100);
+        pdf.text(`${m.year || ''} • Star: ${m.rating || 0}/10`, x + 3, y + 65);
+        pdf.text(`[${m.country || 'TQ'}] ${m.type || 'Bộ'}`, x + 3, y + 70);
+      }
+
+      // Tên file tải về sẽ tự đổi theo Quốc gia (Ví dụ: Movie_Journal_TQ_2026-08-22.pdf)
+      pdf.save(`Movie_Journal_${currentFilter}_${new Date().toISOString().slice(0,10)}.pdf`);
     }
   </script>
 </body>
