@@ -562,9 +562,9 @@
 
           <div class="poster-frame" onclick="handlePosterClick('${m.id}')">
             ${m.poster 
-              ? `<img src="${m.poster}" crossorigin="anonymous">` 
+              ? `<img src="${m.poster}" alt="${m.title || ''}">` 
               : `<div style="font-size:0.75rem; color:var(--text-muted);">
-                   ${isAdmin ? 'Bấm chọn file / Dán link ảnh' : 'Chưa có poster'}
+                   ${isAdmin ? 'Bấm vào đây để thêm / đổi poster' : 'Chưa có poster'}
                  </div>`}
             <input type="file" id="file-${m.id}" class="file-input" accept="image/*" onchange="handleFileSelect(event, '${m.id}')">
           </div>
@@ -684,8 +684,10 @@
 
     function deleteMovie(id) {
       if (!isAdmin) return;
-      movies = movies.filter(x => x.id !== id);
-      saveToCloud();
+      if (confirm("Bạn có chắc chắn muốn xóa phim này không?")) {
+        movies = movies.filter(x => x.id !== id);
+        saveToCloud();
+      }
     }
 
     function updateStats(currentList) {
@@ -695,16 +697,19 @@
       document.getElementById('avg-score').innerText = (sum / currentList.length).toFixed(1);
     }
 
+    /* SỬA LỖI ĐỔI POSTER: Khi quản trị, bấm vào khung poster sẽ hỏi chọn File hoặc Dán Link */
     function handlePosterClick(id) {
       const m = movies.find(x => x.id === id);
       if (!m) return;
 
       if (isAdmin) {
-        const choice = prompt("Nhập 1 để TẢI FILE TỪ MÁY TÍNH\nHoặc DÁN LINK ẢNH trực tiếp vào đây:");
+        const choice = prompt("NHẬP ĐỔI POSTER:\n- Gõ '1': Để TẢI ẢNH TỪ MÁY TÍNH\n- DÁN LINK ẢNH (HTTP/HTTPS): Để dùng link ảnh trực tiếp");
         if (choice === '1') {
-          document.getElementById(`file-${id}`).click();
-        } else if (choice && choice.trim().startsWith('http')) {
-          m.poster = choice.trim(); saveToCloud();
+          const fileInput = document.getElementById(`file-${id}`);
+          if (fileInput) fileInput.click();
+        } else if (choice && choice.trim().length > 5) {
+          m.poster = choice.trim();
+          saveToCloud();
         }
       } else {
         document.getElementById('modal-img').src = m.poster || 'https://via.placeholder.com/200x300?text=No+Poster';
@@ -727,13 +732,17 @@
         const reader = new FileReader();
         reader.onload = function(evt) {
           const m = movies.find(x => x.id === id);
-          if (m) { m.poster = evt.target.result; saveToCloud(); }
+          if (m) { 
+            m.poster = evt.target.result; 
+            saveToCloud(); 
+          }
         };
         reader.readAsDataURL(file);
       }
+      e.target.value = ''; // Reset input file để chọn lại file cùng tên nếu cần
     }
 
-    /* HÀM CHUYỂN URL ẢNH THÀNH BASE64 AN TOÀN TRÁNH BỊ CHẶN CORS */
+    /* CHUYỂN URL ẢNH THÀNH BASE64 KHI CẦN CHỤP / XUẤT PDF TRÁNH BỊ CHẶN CORS */
     async function getBase64ImageFromUrl(imageUrl) {
       if (!imageUrl) return '';
       if (imageUrl.startsWith('data:image')) return imageUrl;
@@ -748,7 +757,6 @@
           reader.readAsDataURL(blob);
         });
       } catch (e) {
-        // Fallback qua proxy cors nếu bị chặn header trực tiếp
         try {
           const proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent(imageUrl);
           const res = await fetch(proxyUrl);
@@ -760,12 +768,12 @@
             reader.readAsDataURL(blob);
           });
         } catch (err) {
-          return '';
+          return imageUrl; // Fallback giữ nguyên link nếuproxy lỗi
         }
       }
     }
 
-    /* TÍNH NĂNG CHỤP ÁNH THẺ PHIM ĐÃ KHẮC PHỤC MẤT HÌNH */
+    /* CHỤP ÁNH THẺ PHIM */
     async function shareCard(id) {
       const m = movies.find(x => x.id === id);
       const cardEl = document.querySelector(`.card[data-id="${id}"]`);
@@ -774,7 +782,6 @@
       const imgEl = cardEl.querySelector('.poster-frame img');
       let originalSrc = '';
       
-      // Xử lý nạp tạm Base64 cho thẻ để html2canvas chụp không bị trắng
       if (imgEl && m.poster && !m.poster.startsWith('data:image')) {
         originalSrc = imgEl.src;
         const b64 = await getBase64ImageFromUrl(m.poster);
@@ -796,7 +803,7 @@
       });
     }
 
-    /* XUẤT PDF ĐÃ SỬA LỖI MẤT HÌNH & BỊ TRẮNG XÓA POSTER */
+    /* XUẤT PDF GRID 3x3 */
     async function exportPDFWithPosters() {
       let exportList = currentFilter === 'ALL' 
         ? [...movies] 
@@ -860,7 +867,6 @@
         const bg = countryBgColors[m.country] || '#ffffff';
         const border = countryBorderColors[m.country] || '#cccccc';
 
-        // Lấy dữ liệu Base64 an toàn cho poster
         let posterDataUrl = '';
         if (m.poster) {
           posterDataUrl = await getBase64ImageFromUrl(m.poster);
