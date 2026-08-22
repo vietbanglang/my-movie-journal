@@ -136,14 +136,24 @@
 
     .card {
       background: var(--card-bg);
-      border: 1px solid var(--border-color);
+      border: 2px solid var(--border-color);
       border-radius: 12px;
       padding: 14px;
       box-shadow: var(--shadow-sm);
       position: relative;
       display: flex;
       flex-direction: column;
+      transition: border-color 0.3s ease, box-shadow 0.3s ease;
     }
+
+    /* Định màu viền riêng cho từng quốc gia */
+    .card[data-country="TQ"] { border-color: #f1b3b3; } /* Trung Quốc - Đỏ nhạt */
+    .card[data-country="HQ"] { border-color: #b3cbe8; } /* Hàn Quốc - Xanh lam nhạt */
+    .card[data-country="AM"] { border-color: #cfb3ed; } /* Âu Mỹ - Tím nhạt */
+    .card[data-country="NB"] { border-color: #f7c2d6; } /* Nhật Bản - Hồng nhạt */
+    .card[data-country="VN"] { border-color: #ebd39b; } /* Việt Nam - Vàng đồng nhạt */
+    .card[data-country="TL"] { border-color: #bde3b3; } /* Thái Lan - Xanh lá nhạt */
+    .card[data-country="Khac"] { border-color: #d3d3d3; } /* Khác - Xám nhạt */
 
     .card.is-admin { cursor: grab; }
     .card.is-admin:active { cursor: grabbing; }
@@ -344,7 +354,6 @@
 
       grid.innerHTML = '';
 
-      // Lọc danh sách phim theo quốc gia
       const filteredMovies = currentFilter === 'ALL' 
         ? movies 
         : movies.filter(m => m.country === currentFilter);
@@ -354,6 +363,7 @@
         const card = document.createElement('div');
         card.className = `card ${isAdmin ? 'is-admin' : ''}`;
         card.setAttribute('data-id', m.id);
+        card.setAttribute('data-country', m.country || 'TQ');
         card.innerHTML = `
           ${isAdmin ? `<button class="btn-delete" onclick="deleteMovie('${m.id}')">✕</button>` : ''}
 
@@ -409,7 +419,6 @@
         sortableInstance = null;
       }
 
-      // Kéo thả chỉ kích hoạt khi đang ở tab "Tất cả" để tránh làm lộn xộn thứ tự
       if (isAdmin && currentFilter === 'ALL') {
         sortableInstance = new Sortable(grid, {
           animation: 150,
