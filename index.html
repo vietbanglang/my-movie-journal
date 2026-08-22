@@ -4,14 +4,16 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>My Movie Journal</title>
-  <link rel="icon" href="[https://fav.farm/](https://fav.farm/)🎬">
+
+  <!-- Favicon icon cuộn phim trên tab web -->
+  <link rel="icon" href="https://fav.farm/🎬">
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Lora:ital,wght@0,400;0,600;1,400&family=Plus+Jakarta+Sans:wght@400;500;600&display=swap" rel="stylesheet">
   
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
-  <!-- Thư viện Kéo thả chuột -->
   <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
 
   <style>
@@ -92,7 +94,6 @@
     .btn:hover { opacity: 0.9; transform: translateY(-1px); }
     .btn-auth { background: #d4a359; color: #fff; }
 
-    /* Filter Tabs Style */
     .filter-tabs {
       display: flex;
       justify-content: center;
@@ -136,25 +137,24 @@
     @media (max-width: 480px) { .grid { grid-template-columns: 1fr; } }
 
     .card {
-      background: var(--card-bg);
-      border: 2px solid var(--border-color);
+      border: 1px solid var(--border-color);
       border-radius: 12px;
       padding: 14px;
       box-shadow: var(--shadow-sm);
       position: relative;
       display: flex;
       flex-direction: column;
-      transition: border-color 0.3s ease, box-shadow 0.3s ease;
+      transition: all 0.3s ease;
     }
 
-    /* Định màu viền riêng cho từng quốc gia */
-    .card[data-country="TQ"] { border-color: #f1b3b3; } /* Trung Quốc - Đỏ nhạt */
-    .card[data-country="HQ"] { border-color: #b3cbe8; } /* Hàn Quốc - Xanh lam nhạt */
-    .card[data-country="AM"] { border-color: #cfb3ed; } /* Âu Mỹ - Tím nhạt */
-    .card[data-country="NB"] { border-color: #f7c2d6; } /* Nhật Bản - Hồng nhạt */
-    .card[data-country="VN"] { border-color: #ebd39b; } /* Việt Nam - Vàng đồng nhạt */
-    .card[data-country="TL"] { border-color: #bde3b3; } /* Thái Lan - Xanh lá nhạt */
-    .card[data-country="Khac"] { border-color: #d3d3d3; } /* Khác - Xám nhạt */
+    /* MÀU NỀN TỔNG THỂ CHO TỪNG QUỐC GIA */
+    .card[data-country="TQ"] { background-color: #fff5f5; border-color: #f7d2d2; } /* Trung Quốc - Hồng đỏ kem */
+    .card[data-country="HQ"] { background-color: #f0f7ff; border-color: #cce3ff; } /* Hàn Quốc - Xanh dương nhạt */
+    .card[data-country="AM"] { background-color: #f8f0fc; border-color: #e9cef7; } /* Âu Mỹ - Tím nhạt */
+    .card[data-country="NB"] { background-color: #fff0f5; border-color: #fcd2e2; } /* Nhật Bản - Hồng hoa anh đào */
+    .card[data-country="VN"] { background-color: #fffdf0; border-color: #fceea7; } /* Việt Nam - Vàng kem */
+    .card[data-country="TL"] { background-color: #f2fbf0; border-color: #cbf0c5; } /* Thái Lan - Xanh lá tươi */
+    .card[data-country="Khac"] { background-color: #ffffff; border-color: #e5dfd5; } /* Khác - Trắng kem */
 
     .card.is-admin { cursor: grab; }
     .card.is-admin:active { cursor: grabbing; }
@@ -176,9 +176,9 @@
     .poster-frame {
       width: 100%;
       aspect-ratio: 2 / 3;
-      border: 1px dashed #c8c2b7;
+      border: 1px dashed rgba(0,0,0,0.15);
       border-radius: 6px;
-      background: #fcfbfa;
+      background: rgba(255,255,255,0.7);
       position: relative;
       overflow: hidden;
       display: flex;
@@ -195,14 +195,14 @@
     .file-input { display: none; }
 
     .editable-text { outline: none; padding: 2px 4px; border-radius: 3px; }
-    .editable-text.can-edit:focus { background: #f0eae1; }
+    .editable-text.can-edit:focus { background: rgba(255,255,255,0.8); }
 
     .movie-title { font-family: var(--font-hand); font-size: 1.1rem; font-weight: 600; }
     .movie-meta { font-size: 0.75rem; color: var(--text-muted); margin-bottom: 10px; display: flex; gap: 4px; }
 
     .rating-container {
-      background: #fbf9f6;
-      border: 1px solid var(--border-color);
+      background: rgba(255,255,255,0.7);
+      border: 1px solid rgba(0,0,0,0.06);
       border-radius: 6px;
       padding: 8px;
       margin-bottom: 12px;
@@ -226,9 +226,9 @@
     .tag-select {
       flex: 1;
       padding: 6px 8px;
-      border: 1px solid var(--border-color);
+      border: 1px solid rgba(0,0,0,0.08);
       border-radius: 6px;
-      background: #fbf9f6;
+      background: rgba(255,255,255,0.8);
       color: var(--text-main);
       font-family: var(--font-body);
       font-size: 0.78rem;
@@ -243,9 +243,8 @@
     }
 
     .tag-select:disabled {
-      background-color: #f5f3ef;
       cursor: default;
-      opacity: 0.9;
+      opacity: 0.95;
     }
   </style>
 </head>
@@ -263,7 +262,6 @@
         <button id="btn-auth" class="btn btn-auth" onclick="toggleAuth()">🔓 Đăng Nhập Quản Trị</button>
       </div>
 
-      <!-- Thanh chọn Tab Quốc gia -->
       <div class="filter-tabs">
         <button class="tab-btn active" onclick="setFilter('ALL', this)">Tất cả</button>
         <button class="tab-btn" onclick="setFilter('TQ', this)">🇨🇳 Trung Quốc</button>
